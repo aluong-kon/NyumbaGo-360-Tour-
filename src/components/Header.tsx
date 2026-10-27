@@ -2,25 +2,20 @@ import React, { useState } from 'react';
 import {
   Compass,
   Globe,
-  UserCheck,
   Bookmark,
   Bell,
   Code2,
   ShieldCheck,
-  Building2,
-  Briefcase,
-  SlidersHorizontal,
   UserPlus,
   Scale,
   LogOut,
+  Lock,
 } from 'lucide-react';
 import { UserRole, Language, NotificationItem, UserProfile } from '../types';
 import { translations } from '../lib/i18n';
 import { NyumbaGoService } from '../lib/supabase';
 
 interface HeaderProps {
-  currentRole: UserRole;
-  setRole: (role: UserRole) => void;
   lang: Language;
   setLang: (lang: Language) => void;
   savedCount: number;
@@ -28,6 +23,8 @@ interface HeaderProps {
   onOpenDevDocs: () => void;
   onOpenPrivacy: () => void;
   onOpenSignup: () => void;
+  onOpenAuth: () => void;
+  onSignOut: () => void;
   onOpenLegalDocs: (docId?: string) => void;
   onOpenUserSettings: () => void;
   notifications: NotificationItem[];
@@ -37,8 +34,6 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  currentRole,
-  setRole,
   lang,
   setLang,
   savedCount,
@@ -46,6 +41,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenDevDocs,
   onOpenPrivacy,
   onOpenSignup,
+  onOpenAuth,
+  onSignOut,
   onOpenLegalDocs,
   onOpenUserSettings,
   notifications,
@@ -64,16 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
     onRefreshNotifications();
   };
 
-  const handleSwitchToDemoProfile = (role: UserRole) => {
-    setRole(role);
-    // Find matching profile
-    const profiles = NyumbaGoService.getProfiles();
-    const matched = profiles.find((p) => p.role === role);
-    if (matched) {
-      NyumbaGoService.setCurrentUser(matched.id);
-      onUserChanged();
-    }
-  };
+
 
   return (
     <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 text-white shadow-lg backdrop-blur">
@@ -100,56 +88,10 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Role Switcher Pill */}
-          <div className="hidden lg:flex items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700">
-            <button
-              onClick={() => handleSwitchToDemoProfile('hunter')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                currentRole === 'hunter'
-                  ? 'bg-emerald-600 text-white shadow'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <Compass className="w-3.5 h-3.5" />
-              Hunter
-            </button>
-            <button
-              onClick={() => handleSwitchToDemoProfile('landlord')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                currentRole === 'landlord'
-                  ? 'bg-emerald-600 text-white shadow'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              Landlord
-            </button>
-            <button
-              onClick={() => handleSwitchToDemoProfile('agent')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                currentRole === 'agent'
-                  ? 'bg-emerald-600 text-white shadow'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <Briefcase className="w-3.5 h-3.5" />
-              Agent
-            </button>
-            <button
-              onClick={() => handleSwitchToDemoProfile('admin')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                currentRole === 'admin'
-                  ? 'bg-amber-600 text-white shadow'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              Admin
-            </button>
-          </div>
-
           {/* Right Action Icons */}
           <div className="flex items-center gap-2 sm:gap-2.5">
+            {!currentUser && <button onClick={onOpenAuth} className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-700"><Lock className="h-3.5 w-3.5" />Sign in</button>}
+
             {/* 18+ Signup Button */}
             <button
               onClick={onOpenSignup}
@@ -318,15 +260,7 @@ export const Header: React.FC<HeaderProps> = ({
                       Legal Documents Center
                     </button>
 
-                    <button
-                      onClick={() => {
-                        onOpenSignup();
-                        setShowUserMenu(false);
-                      }}
-                      className="w-full text-left p-1.5 rounded-lg hover:bg-slate-800 text-cyan-400"
-                    >
-                      + Register New 18+ Account
-                    </button>
+                    <button onClick={() => { onSignOut(); setShowUserMenu(false); }} className="flex w-full items-center gap-2 rounded-lg p-1.5 text-left text-rose-300 hover:bg-slate-800"><LogOut className="h-3.5 w-3.5" />Sign out securely</button>
                   </div>
                 )}
               </div>

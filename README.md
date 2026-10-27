@@ -55,7 +55,7 @@ npm run dev
 
 Open http://localhost:3000.
 
-The app works with no keys. Without an AI model, Smart Search uses a built in parser. Without Supabase, data saves in your browser.
+Secure account access and Google Maps require configuration. Without an AI model, Smart Search uses a built in parser. Real account creation and sign-in are disabled until Supabase is configured.
 
 ## Smart Search and the AI router
 
@@ -107,7 +107,8 @@ Paid providers stay off by default. They run only if you set `MONTHLY_BUDGET_USD
 | `MONTHLY_BUDGET_USD` | Spend cap for paid providers | `0` |
 | `AI_RATE_PER_MIN` | Requests per IP per minute | `20` |
 | `VITE_SUPABASE_URL` | Supabase project URL | empty |
-| `VITE_SUPABASE_ANON_KEY` | Supabase public key | empty |
+| `VITE_SUPABASE_ANON_KEY` | Supabase publishable/anon key | empty |
+| `VITE_GOOGLE_MAPS_API_KEY` | Browser key restricted to your website for Google Maps JavaScript API | empty |
 
 Keep API keys in `.env`. Git ignores it. Never put a secret in a variable that starts with `VITE_`, because Vite sends those to the browser.
 
@@ -127,9 +128,15 @@ supabase/
 docs/             Screenshots
 ```
 
-## Database
+## Database and account security
 
-Apply the files in `supabase/migrations` to your Supabase project, then set the two `VITE_SUPABASE_` variables. A rollback file is included for the legal compliance migration. Deploy the two edge functions in `supabase/functions` to validate Viewora links on the server.
+1. Apply the migrations in `supabase/migrations` to your Supabase project, including `20261027000002_supabase_auth_profiles.sql`.
+2. Enable email/password authentication in Supabase Auth and configure the email confirmation and redirect URLs for your deployed domain.
+3. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (the Supabase publishable/anon key only). Never expose a service-role key in browser variables.
+4. In Google Cloud, enable **Maps JavaScript API**, configure billing, create a browser key restricted by HTTP referrer to your local development and production domains, then set `VITE_GOOGLE_MAPS_API_KEY`.
+5. Provide accurate latitude/longitude values for each listing. The map intentionally does not invent pin locations from percentage-based mock positions.
+
+The migration creates profiles from Supabase Auth users and allows authenticated users to read their own profile. Apply and verify migrations in your own Supabase project before deploying. Deploy the edge functions in `supabase/functions` to validate Viewora links on the server.
 
 ## Deploy
 
