@@ -1,0 +1,6 @@
+{
+  "name": "NyumbaGO - Kenya Rentals & 360° Tours",
+  "description": "Kenya-wide rental house hunting with KSh budget-first search, interactive map, landlord & agent management, and Viewora 360° virtual tours.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
