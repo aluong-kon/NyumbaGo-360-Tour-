@@ -252,16 +252,6 @@ export default function App() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
       {/* Global Header */}
       <Header
-        currentRole={role}
-        setRole={(newRole) => {
-          setRole(newRole);
-          const profiles = NyumbaGoService.getProfiles();
-          const matched = profiles.find((p) => p.role === newRole);
-          if (matched) {
-            NyumbaGoService.setCurrentUser(matched.id);
-            refreshData();
-          }
-        }}
         lang={lang}
         setLang={setLang}
         savedCount={savedIds.length}
