@@ -167,9 +167,9 @@ export class NyumbaGoService {
   }
 
   public static getCurrentUser(): UserProfile | null {
-    const currentId = localStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID) || 'hunter-demo';
-    const profile = this.getProfileById(currentId);
-    return profile || INITIAL_PROFILES[2]; // Default to hunter-demo
+    const currentId = localStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID);
+    if (!currentId) return null;
+    return this.getProfileById(currentId) || null;
   }
 
   public static setCurrentUser(id: string): void {
