@@ -1,5 +1,5 @@
 import { realSupabase, isRealSupabaseConfigured } from './supabase';
-import type { UserProfile, UserRole } from '../types';
+import type { UserProfile } from '../types';
 
 const PROFILE_CACHE = 'nyumbago_profiles_v1';
 const CURRENT_USER_KEY = 'nyumbago_current_user_id_v1';
@@ -92,39 +92,4 @@ export async function signInWithEmail(email: string, password: string): Promise<
 export async function signOutNyumbaGo(): Promise<void> {
   if (realSupabase) await realSupabase.auth.signOut();
   localStorage.removeItem(CURRENT_USER_KEY);
-}
-
-export async function registerWithSupabase(params: {
-  fullName: string;
-  email: string;
-  phone: string;
-  password: string;
-  role: Exclude<UserRole, 'admin'>;
-  ageVerified: boolean;
-}): Promise<{ success: boolean; error?: string; requiresEmailConfirmation?: boolean }> {
-  if (!isRealSupabaseConfigured || !realSupabase) {
-    return { success: false, error: 'Registration requires a configured Supabase project. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY before creating real accounts.' };
-  }
-  const { data, error } = await realSupabase.auth.signUp({
-    email: params.email.trim(),
-    password: params.password,
-    options: {
-      data: {
-        full_name: params.fullName.trim(),
-        phone: params.phone.trim(),
-        requested_role: params.role,
-        age_verified: params.ageVerified,
-        age_verified_at: params.ageVerified ? new Date().toISOString() : null,
-      },
-    },
-  });
-  if (error) return { success: false, error: error.message };
-  if (data.session && data.user) {
-    const profile = await loadProfile(data.user.id);
-    if (!profile) {
-      return { success: false, error: 'Your account was created, but its profile is not ready yet. Please sign in again shortly.' };
-    }
-    return { success: true };
-  }
-  return { success: true, requiresEmailConfirmation: true };
 }
