@@ -53,6 +53,8 @@ create trigger on_auth_user_created_nyumbago
 
 alter table public.profiles enable row level security;
 
+drop policy if exists "Users can read own profile" on public.profiles;
+drop policy if exists "Public can read landlord and agent verification status" on public.profiles;
 drop policy if exists "NyumbaGO users read own profile" on public.profiles;
 create policy "NyumbaGO users read own profile"
   on public.profiles for select
