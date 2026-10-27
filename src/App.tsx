@@ -33,6 +33,8 @@ import { CookieBanner } from './components/CookieBanner';
 import { UserSettingsModal } from './components/UserSettingsModal';
 import { PublicAccountDeletionModal } from './components/PublicAccountDeletionModal';
 import { NyumbaGoService } from './lib/supabase';
+import { restoreAuthSession, signOutNyumbaGo } from './lib/auth';
+import { AuthModal } from './components/AuthModal';
 import { translations } from './lib/i18n';
 import { Video, Sparkles, ShieldCheck, Scale, FileText, Lock } from 'lucide-react';
 
@@ -41,9 +43,9 @@ export default function App() {
   const [lang, setLang] = useState<Language>('en');
 
   // Core Data
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(
-    NyumbaGoService.getCurrentUser()
-  );
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [listings, setListings] = useState<Listing[]>([]);
   const [partnerSettings, setPartnerSettings] = useState<PartnerSettings>(
     NyumbaGoService.getPartnerSettings()
@@ -100,7 +102,14 @@ export default function App() {
   };
 
   useEffect(() => {
-    refreshData();
+    let mounted = true;
+    restoreAuthSession().then((user) => {
+      if (!mounted) return;
+      setCurrentUser(user);
+      if (user) { setRole(user.role); refreshData(); }
+      setAuthReady(true);
+    }).catch(() => { if (mounted) setAuthReady(true); });
+    
 
     // Check URL query parameters for direct shared links (e.g. ?listing=id&tour=1)
     const urlParams = new URLSearchParams(window.location.search);
@@ -122,6 +131,7 @@ export default function App() {
       setActiveLegalDocId(legalParam);
       setShowLegalDocsModal(true);
     }
+    return () => { mounted = false; };
   }, []);
 
   const t = translations[lang];
@@ -259,6 +269,8 @@ export default function App() {
         onOpenDevDocs={() => setShowDevDocs(true)}
         onOpenPrivacy={() => setShowPrivacy(true)}
         onOpenSignup={() => setShowSignupModal(true)}
+        onOpenAuth={() => setShowAuthModal(true)}
+        onSignOut={() => { signOutNyumbaGo().then(() => { setCurrentUser(null); setRole('hunter'); setShowAuthModal(false); }); }}
         onOpenLegalDocs={handleOpenLegalDoc}
         onOpenUserSettings={() => setShowUserSettingsModal(true)}
         notifications={notifications}
@@ -269,6 +281,19 @@ export default function App() {
 
       {/* Main Content Area based on User Role */}
       <main className="flex-1 flex flex-col">
+        {!authReady ? (
+          <div className="flex min-h-[55vh] items-center justify-center text-sm text-slate-400">Checking your secure session…</div>
+        ) : !currentUser ? (
+          <section className="mx-auto flex min-h-[65vh] w-full max-w-3xl flex-col items-center justify-center px-6 py-16 text-center">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-600/20 text-emerald-300"><Lock className="h-8 w-8" /></div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">Secure access · 18+ only</p>
+            <h1 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-5xl">Find your next home with confidence.</h1>
+            <p className="mt-4 max-w-xl text-sm leading-6 text-slate-300 sm:text-base">Sign in to explore affordable rentals across Kenya, save properties, compare options and request viewings. New here? Create an account to get started.</p>
+            <div className="mt-7 flex flex-wrap justify-center gap-3"><button onClick={() => setShowAuthModal(true)} className="rounded-xl bg-emerald-600 px-6 py-3 text-sm font-extrabold text-white hover:bg-emerald-500">Sign in</button><button onClick={() => setShowSignupModal(true)} className="rounded-xl border border-slate-700 bg-slate-800 px-6 py-3 text-sm font-bold text-white hover:bg-slate-700">Create account (18+)</button></div>
+            <p className="mt-5 text-xs text-slate-500">Authentication is handled by your configured Supabase project. Demo role switching is disabled.</p>
+          </section>
+        ) : (
+        <>
         {/* ========================================================================= */}
         {/* ROLE: HUNTER (HOME RENTAL SEARCH) */}
         {/* ========================================================================= */}
@@ -401,6 +426,8 @@ export default function App() {
               setPartnerSettings(updated);
             }}
           />
+        )}
+        </>
         )}
       </main>
 
@@ -595,6 +622,8 @@ export default function App() {
       {showPublicDeletionModal && (
         <PublicAccountDeletionModal onClose={() => setShowPublicDeletionModal(false)} />
       )}
+
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onSuccess={refreshData} onRegister={() => { setShowAuthModal(false); setShowSignupModal(true); }} />}
 
       {/* Signup Modal (18+ Age Gate & Unbundled Consents) */}
       {showSignupModal && (
