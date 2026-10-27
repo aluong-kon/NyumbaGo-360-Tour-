@@ -67,7 +67,13 @@ export async function restoreAuthSession(): Promise<UserProfile | null> {
     localStorage.removeItem(CURRENT_USER_KEY);
     return null;
   }
-  return loadProfile(data.user.id);
+  const profile = await loadProfile(data.user.id);
+  if (!profile || profile.status !== 'active' || !profile.age_verified) {
+    await realSupabase.auth.signOut();
+    localStorage.removeItem(CURRENT_USER_KEY);
+    return null;
+  }
+  return profile;
 }
 
 export async function signInWithEmail(email: string, password: string): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
@@ -81,7 +87,7 @@ export async function signInWithEmail(email: string, password: string): Promise<
     await realSupabase.auth.signOut();
     return { success: false, error: 'Your account profile is not ready. Confirm your email or contact support.' };
   }
-  if (profile.status !== 'active') {
+  if (profile.status !== 'active' || !profile.age_verified) {
     await realSupabase.auth.signOut();
     localStorage.removeItem(CURRENT_USER_KEY);
     return { success: false, error: 'This account is not active. Contact NyumbaGO support.' };
