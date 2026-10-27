@@ -48,6 +48,7 @@ export const SignupModal: React.FC<SignupModalProps> = ({
   const [consentLocation, setConsentLocation] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
+  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
   const [under18Blocked, setUnder18Blocked] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -116,6 +117,7 @@ export const SignupModal: React.FC<SignupModalProps> = ({
         fullName,
         email,
         phone,
+        password,
         dob, // DOB used for check, then IMMEDIATELY DISCARDED by service
         role,
         confirm18Plus,
@@ -131,6 +133,11 @@ export const SignupModal: React.FC<SignupModalProps> = ({
         return;
       }
 
+      if (result.requiresEmailConfirmation) {
+        setConfirmationMessage('Account created. Check your email for the confirmation link, then return here to sign in.');
+        setLoading(false);
+        return;
+      }
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -200,6 +207,8 @@ export const SignupModal: React.FC<SignupModalProps> = ({
         </div>
 
         <form onSubmit={handleSignup} className="space-y-4">
+          {confirmationMessage && <div role="status" className="p-3.5 rounded-2xl bg-emerald-950/70 border border-emerald-800 text-emerald-200 text-xs">{confirmationMessage}</div>}
+
           {error && (
             <div className="p-3.5 rounded-2xl bg-rose-950/70 border border-rose-800 text-rose-300 text-xs flex items-start gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
