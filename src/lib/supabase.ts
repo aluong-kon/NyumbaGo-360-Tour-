@@ -186,6 +186,7 @@ export class NyumbaGoService {
     fullName: string;
     email: string;
     phone: string;
+    password: string;
     dob: string;
     role: 'hunter' | 'landlord' | 'agent';
     confirm18Plus: boolean;
@@ -193,7 +194,7 @@ export class NyumbaGoService {
     consentTermsPrivacy: boolean;
     consentMarketing: boolean;
     consentLocation: boolean;
-  }): Promise<{ success: boolean; error?: string; user?: UserProfile }> {
+  }): Promise<{ success: boolean; error?: string; user?: UserProfile; requiresEmailConfirmation?: boolean }> {
     // 1. Check Age
     const ageCheck = verifyAdultAge(params.dob);
     if (!ageCheck.isAdult) {
@@ -227,16 +228,29 @@ export class NyumbaGoService {
       };
     }
 
-    const profiles = this.getProfiles();
-    const existing = profiles.find((p) => p.email.toLowerCase() === params.email.toLowerCase());
-    if (existing) {
-      return { success: false, error: 'An account with this email address already exists.' };
+    if (!realSupabase) {
+      return { success: false, error: 'Secure account creation is unavailable until the Supabase project is configured. Please try again later.' };
     }
 
-    const userId = 'usr_' + Math.random().toString(36).substring(2, 9);
     const now = new Date().toISOString();
+    const { data: authData, error: authError } = await realSupabase.auth.signUp({
+      email: params.email.trim(),
+      password: params.password,
+      options: {
+        data: {
+          full_name: params.fullName.trim(),
+          phone: params.phone.trim(),
+          requested_role: params.role,
+          age_verified: true,
+          age_verified_at: now,
+        },
+      },
+    });
+    if (authError || !authData.user) {
+      return { success: false, error: authError?.message || 'Secure account creation failed.' };
+    }
 
-    // Store ONLY age_verified: true and age_verified_at. ZERO DOB stored!
+    const userId = authData.user.id;
     const newProfile: UserProfile = {
       id: userId,
       email: params.email.trim(),
@@ -253,9 +267,10 @@ export class NyumbaGoService {
       updated_at: now,
     };
 
+    const profiles = this.getProfiles().filter((profile) => profile.id !== userId);
     profiles.push(newProfile);
     this.setStoredData(STORAGE_KEYS.PROFILES, profiles);
-    this.setCurrentUser(userId);
+    if (authData.session) this.setCurrentUser(userId);
 
     // Record Unbundled Consents with Salted IP Hash (PART 3)
     const ipHash = await generateSaltedIpHash(userId);
@@ -293,7 +308,7 @@ export class NyumbaGoService {
       saltedIpHash: ipHash,
     });
 
-    return { success: true, user: newProfile };
+    return { success: true, user: newProfile, requiresEmailConfirmation: !authData.session };
   }
 
   // --- LEGAL DOCUMENTS & RE-CONSENT (PART 1 & 3) ---
