@@ -1,5 +1,5 @@
 import { realSupabase, isRealSupabaseConfigured } from './supabase';
-import type { UserProfile } from '../types';
+import type { UserProfile, UserRole } from '../types';
 
 const PROFILE_CACHE = 'nyumbago_profiles_v1';
 const CURRENT_USER_KEY = 'nyumbago_current_user_id_v1';
