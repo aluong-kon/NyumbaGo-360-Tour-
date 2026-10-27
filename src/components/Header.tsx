@@ -2,14 +2,10 @@ import React, { useState } from 'react';
 import {
   Compass,
   Globe,
-  UserCheck,
   Bookmark,
   Bell,
   Code2,
   ShieldCheck,
-  Building2,
-  Briefcase,
-  SlidersHorizontal,
   UserPlus,
   Scale,
   LogOut,
@@ -20,8 +16,6 @@ import { translations } from '../lib/i18n';
 import { NyumbaGoService } from '../lib/supabase';
 
 interface HeaderProps {
-  currentRole: UserRole;
-  setRole: (role: UserRole) => void;
   lang: Language;
   setLang: (lang: Language) => void;
   savedCount: number;
@@ -40,8 +34,6 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  currentRole,
-  setRole,
   lang,
   setLang,
   savedCount,
